@@ -1,0 +1,258 @@
+{% include 'wh_calculate_discount' with product, hide_method: 'break' %}
+<!-- /templates/product.liquid -->
+
+{% include 'wh_calculate_discount' with product %} 
+
+<div itemscope itemtype="http://schema.org/Product">
+
+  <meta itemprop="url" content="{{ shop.url }}{{ product.url }}">
+  <meta itemprop="image"  loading="lazy" content="{{ product.featured_image.src |image_tag: loading: 'lazy' | img_url: 'grande' }}">
+
+  {% assign current_variant = product.selected_or_first_available_variant %}
+  {% include 'wh_variant' with current_variant %}
+  <div class="grid product-single">
+    <div class="grid__item large--seven-twelfths medium--seven-twelfths text-center">
+      <div class="product-single__photos">
+        {% assign featured_image = current_variant.featured_image | default: product.featured_image %}
+
+        {% comment %}
+          Display current variant image, or default first
+        {% endcomment %}
+        <div class="product-single__photo-wrapper">
+          <img class="product-single__photo" id="ProductPhotoImg"  loading="lazy" src="{{ featured_image  |image_tag: loading: 'lazy'| img_url: 'grande' }}" {% if settings.product_zoom_enable %}data-mfp-src="{{ featured_image |image_tag: loading: 'lazy' | img_url: '1024x1024' }}"{% endif %} alt="{{ featured_image.alt | escape }}" data-image-id="{{ featured_image.id }}">
+        </div>
+
+        {% comment %}
+          Display rest of product images, not repeating the featured one
+        {% endcomment %}
+        {% for image in product.images %}
+          {% unless image contains featured_image %}
+            <div class="product-single__photo-wrapper">
+              <img class="product-single__photo"  loading="lazy" src="{{ image.src |image_tag: loading: 'lazy'| img_url: 'grande' }}" {% if settings.product_zoom_enable %}data-mfp-src="{{ image.src |image_tag: loading: 'lazy'| img_url: '1024x1024' }}"{% endif %} alt="{{ image.alt | escape }}" data-image-id="{{ image.id }}">
+            </div>
+          {% endunless %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="grid__item product-single__meta--wrapper medium--five-twelfths large--five-twelfths">
+      <div class="product-single__meta">
+        {% if settings.product_vendor_enable %}
+          <h2 class="product-single__vendor" itemprop="brand">{{ product.vendor }}</h2>
+        {% endif %}
+
+        <h1 class="product-single__title" itemprop="name">{{ product.title }}</h1>
+
+        <!-- Start of Judge.me code -->
+      <div style='{{ jm_style }}' class='jdgm-widget jdgm-preview-badge' data-id='{{ product.id }}' data-auto-install='false'>
+        {{ product.metafields.judgeme.badge }}
+      </div>
+      <!-- End of Judge.me code -->
+
+<a href="#trustreviewsFrame"><div class="trustreviews-rating" data-id="{{ product.id }}" data-rating="{{ product.metafields.trustreviews.avg_rating }}" data-raters="{{ product.metafields.trustreviews.num_reviews }}"></div></a>
+
+        <div itemprop="offers" itemscope itemtype="http://schema.org/Offer">
+          {% comment %}
+            Optionally show the 'compare at' or original price of the product.
+          {% endcomment %}
+
+          {% if wh_compare_at_price > wh_price %}
+            <span class="product-single__price--wrapper">
+              <span class="visually-hidden">{{ 'products.general.regular_price' | t }}</span>
+              <span id="ComparePrice" class="product-single__price--compare-at">
+                {{ wh_compare_at_price | money }}
+              </span>
+              <span class="visually-hidden">{{ 'products.general.sale_price' | t }}</span>
+            </span>
+          {% endif %}
+
+          <span id="ProductPrice" class="product-single__price{% if wh_compare_at_price > wh_price %} on-sale{% endif %}" itemprop="price">
+            {{ wh_v_price | money }}
+          </span>
+
+          <hr class="hr--small">
+
+          <meta itemprop="priceCurrency" content="{{ shop.currency }}">
+          <link itemprop="availability" href="http://schema.org/{% if product.available %}InStock{% else %}OutOfStock{% endif %}">
+
+          <form action="/cart/add" method="post" enctype="multipart/form-data" class="product-single__form" id="AddToCartForm">
+            <select name="id" id="ProductSelect" class="product-single__variants">
+              {% for variant in product.variants %}
+{% include 'wh_variant' with variant %}
+                {% if variant.available %}
+                  <option {% if variant == product.selected_or_first_available_variant %} selected="selected" {% endif %} data-sku="{{ variant.sku }}" value="{{ variant.id }}">{{ variant.title }} - {{ wh_v_price | money_with_currency }}</option>
+                {% else %}
+                  <option disabled="disabled">
+                    {{ variant.title }} - {{ 'products.product.sold_out' | t }}
+                  </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+{% comment %}
+ shoppad code
+{% endcomment %}
+<div id="infiniteoptions-container"></div>
+            {% comment %}
+            <div class="product-single__quantity">
+              <label for="Quantity" class="product-single__quantity-label js-quantity-selector">{{ 'products.product.quantity' | t }}</label>
+              <input type="number" hidden="hidden" id="Quantity" name="quantity" value="1" min="1" class="js-quantity-selector">
+            </div>
+            {% endcomment %}
+
+            <div class="product-single__add-to-cart">
+              
+              {% if customer.tags.size > 0 %}
+                <button type="submit" name="add" class="btn">
+              {% else %}
+                <button type="submit" name="add" id="AddToCart" class="btn">
+              {% endif %}
+                  
+                <span id="AddToCartText">{{ 'products.product.add_to_cart' | t }}</span>
+              </button>
+              <!-- include 'wishlist-button-product' with '{{ product.id }}' -->
+            </div>
+          </form>
+
+        </div>
+
+        <div class="product-single__description rte" itemprop="description">
+          {{ product.description }}
+        </div>
+        
+
+        {% if settings.social_sharing_products %}
+          {% include 'social-sharing' %}
+        {% endif %}
+      </div>
+      </div>
+  </div>
+
+  {% if collection %}
+    <hr class="hr--clear">
+    <div class="text-center">
+      <a href="{{ collection.url }}" class="return-link">&larr; {{ 'products.general.collection_return' | t: collection: collection.title }}</a>
+    </div>
+  {% endif %}
+
+                  <!-- Start of Judge.me code -->
+      <div style='clear:both'></div>
+      <div id='judgeme_product_reviews' class='jdgm-widget jdgm-review-widget' data-product-title='{{ product.title | escape }}' data-id='{{ product.id }}' data-auto-install='false'>
+        {{ product.metafields.judgeme.widget }}
+      </div>
+      <!-- End of Judge.me code -->
+
+</div>
+
+{% comment %}
+
+  *IMPORTANT:*
+  This theme uses a customized version of `option_selection.js` to support using radio inputs for
+  color and size variants. The custom version is in `variant_selection.js`.
+
+  If you wish to enable the default dropdowns for size and color
+  you can change the liquid asset tag below from:
+
+  {{ 'variant_selection.js' | asset_url | script_tag }}
+
+  to
+
+  {{ 'option_selection.js' | shopify_asset_url | script_tag }}
+
+  If you use the default `option_selection.js` the labels for the dropdowns will
+  appear outside the dropdown.
+
+  You will also need to change `.radio-wrapper` to `.selector-wrapper` below.
+
+{% endcomment %}
+{{ 'variant_selection.js' | asset_url | script_tag }}
+
+<script>
+  var selectCallback = function(variant, selector) {
+    timber.productPage({
+      money_format: "{{ shop.money_format }}",
+      variant: variant,
+      selector: selector
+    });
+  };
+
+  jQuery(function($) {
+    new Shopify.OptionSelectors('ProductSelect', {
+      product: {% include 'wh_product_json' with product %},
+      onVariantSelected: selectCallback,
+      enableHistoryState: true
+    });
+
+    // Add label if only one product option and it isn't 'Title'. Could be 'Size'.
+    {% if product.options.size == 1 and product.options.first != 'Title' %}
+      $('.radio-wrapper:eq(0)').prepend('<label for="ProductSelect-option-0" class="single-option-radio__label">{{ product.options.first | escape }}</label>');
+    {% endif %}
+
+    // Hide drop-down selectors if we only have 1 variant and its title contains 'Default'.
+    {% if product.variants.size == 1 and product.variants.first.title contains 'Default' %}
+      $('.selector-wrapper').hide();
+    {% endif %}
+  });
+</script>
+
+{% comment %}
+ shoppad code
+{% endcomment %}
+<script>
+// To change what your customers would see if they try to 
+// add to cart without completing an option, edit the yellow text enclosed within the quotation marks.
+var errorMessages = {
+  for_text_inputs  : "Please add your personalized text before adding to cart.",
+  for_number_inputs: "Please enter a custom quantity.",
+  for_checkboxes   : "Please select your options before adding to cart",
+  for_dropdowns    : "Please select an option before adding to cart"
+};
+jQuery("form[action='/cart/add'] [type=submit]").on("click", function(e) {
+  if (
+    window.Shoppad &&
+    window.Shoppad.apps &&
+    window.Shoppad.apps.customizery &&
+    window.Shoppad.apps.customizery.overrideDeprecatedValidation
+  ) return true;
+ 
+  $io = $('#infiniteoptions-container');
+  var invalidTextInputs = $io.find("input[type=text][required], textarea[required]").filter(function (idx, el) {
+    return $(el).val() === '';
+  });
+  var invalidNumberInputs = $io.find('input[type=number][required]').filter(function (idx, el) {
+    return $(el).val() === '';
+  });
+  var invalidFieldSets = $io.find('fieldset[data-required=true]').filter(function (idx, fieldSet) {
+    if ($(fieldSet).find('input[type=checkbox]').length === 0) {
+      return false;
+    } else {
+      return $(fieldSet).find('input[type=checkbox]').filter(function (idx, el) {
+        return el.checked === true;
+      }).length === 0;
+    }
+  });
+  var invalidDropdowns = $io.find('select[required]').filter(function (idx, select) {
+    return !select.selectedOptions[0] || select.selectedOptions[0].disabled === true;
+  });
+  var onFail = function (messageType) {
+    e.stopImmediatePropagation();
+    alert( errorMessages[messageType] );
+    return false;
+  };
+  if (invalidTextInputs.length > 0) {
+    return onFail( 'for_text_inputs' );
+  
+  } else if (invalidNumberInputs.length > 0) {
+    return onFail( 'for_number_inputs' );
+  } else if (invalidFieldSets.length > 0) {
+    return onFail( 'for_checkboxes' );
+  
+  } else if (invalidDropdowns.length > 0) {
+    return onFail( 'for_dropdowns' );
+  } else {
+    return true;
+  }
+});
+</script>
+
+                  <div id="trustreviews" class="page-width" data-product-id="{{product.id}}"> {{ product.metafields.trustreviews.iframe }}
+</div>
